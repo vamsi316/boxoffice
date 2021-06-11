@@ -1,53 +1,68 @@
-import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useEffect, useReducer } from 'react';
+import { useParams } from 'react-router-dom';
 import { apiGet } from '../misc/config';
 
+const reducer = (prevState, action) => {
+  switch (action.type) {
+    case 'FETCH_SUCCESS': {
+      return { isLoading: false, error: null, show: action.show };
+    }
+
+    case 'FETCH_FAILED': {
+      return { ...prevState, isLoading: false, error: action.error };
+    }
+
+    default:
+      return prevState;
+  }
+};
+
+const initialState = {
+  show: null,
+  isLoading: true,
+  error: null,
+};
+
 const Show = () => {
+  const { id } = useParams();
 
-    const {id} = useParams;
+  const [{ show, isLoading, error }, dispatch] = useReducer(
+    reducer,
+    initialState
+  );
 
-    const [show, setShow] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+  useEffect(() => {
+    let isMounted = true;
 
-    useEffect( () => {
-        let isMounted = true;
-
-        apiGet(`/show/${id}?embed[]=seasons&embed[]=cast`)
-        .then(results => {
-            if(isMounted) {
-                setShow(results);
-                setIsLoading(false);
-            }
-        })
-        .catch(err => {
-            if(isMounted) {
-                setError(err.message);
-                setIsLoading(false);
-            }
-        });
-
-        return () => {
-            isMounted = false;
+    apiGet(`/shows/${id}?embed[]=seasons&embed[]=cast`)
+      .then(results => {
+        if (isMounted) {
+          dispatch({ type: 'FETCH_SUCCESS', show: results });
         }
-    }, [id]);
+      })
+      .catch(err => {
+        if (isMounted) {
+          dispatch({ type: 'FETCH_FAILED', error: err.message });
+        }
+      });
 
-    // eslint-disable-next-line no-console
-    console.log('show', show);
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
-    if(isLoading) {
-        return <div>Data is being loaded</div>
-    }
+  // eslint-disable-next-line no-console
+  console.log('show', show);
 
-    if(error) {
-        return <div>Error occured {error.message}</div>
-    }
+  if (isLoading) {
+    return <div>Data is being loaded</div>;
+  }
 
-    return (
-        <div>
-            This is show page
-        </div>
-    );
-}
+  if (error) {
+    return <div>Error occured: {error}</div>;
+  }
+
+  return <div>this is show page</div>;
+};
 
 export default Show;
