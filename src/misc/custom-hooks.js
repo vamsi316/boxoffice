@@ -2,7 +2,7 @@ import {useReducer, useEffect} from 'react'
 
 function showsReducer(prevState, action) {
 
-    switch(action, type) {
+    switch(action.type) {
 
         case 'ADD': {
             return [...prevState, action.showId]
